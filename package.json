@@ -1,0 +1,23 @@
+{
+  "name": "holodan",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "vite",
+    "electron-dev": "concurrently \"vite\" \"ts-node electron/main.ts\"",
+    "build": "vite build",
+    "start": "npm run build && electron electron-dist/main.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "electron": "^36.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0",
+    "rot-js": "^2.2.1"
+  }
+}
