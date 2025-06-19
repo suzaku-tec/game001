@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "electron-dev": "concurrently \"vite\" \"ts-node electron/main.ts\"",
-    "build": "vite build",
+    "build": "vite build && npm run electron-build",
+    "electron-build": "npx tsc --project tsconfig.electron.json",
     "start": "npm run build && electron electron-dist/main.js"
   },
   "devDependencies": {

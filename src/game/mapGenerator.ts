@@ -1,6 +1,7 @@
 import * as ROT from "rot-js";
+import { Room } from "../roguelike/room";
 
-export const generateMap = (width: number, height: number): number[][] => {
+export const generateMap = (width: number, height: number): { map: number[][]; rooms: Room[] } => {
   const map: number[][] = Array.from({ length: height }, () =>
     Array(width).fill(1)
   );
@@ -10,5 +11,13 @@ export const generateMap = (width: number, height: number): number[][] => {
     map[y][x] = value; // 0:通路, 1:壁
   });
 
-  return map;
+  // 部屋情報を取得
+  const rooms = digger.getRooms().map((room: any) => new Room(
+    room.getLeft(),
+    room.getTop(),
+    room.getRight() - room.getLeft() + 1,
+    room.getBottom() - room.getTop() + 1
+  ));
+
+  return { map, rooms };
 };
