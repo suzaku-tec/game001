@@ -1,7 +1,11 @@
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, Menu, ipcMain } from 'electron'
 import path from 'path'
 
 const isDev = !app.isPackaged
+
+ipcMain.on("log-to-main", (event: Electron.IpcMainEvent, message) => {
+  console.log(`[Renderer][${event.type}]`, message);
+});
 
 const createWindow = () => {
   Menu.setApplicationMenu(null);
@@ -14,7 +18,7 @@ const createWindow = () => {
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "./preload.js"),
     },
   })
 

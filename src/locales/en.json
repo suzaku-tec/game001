@@ -1,0 +1,7 @@
+{
+  "item_get": "You got an ${name}!",
+  "game_clear": "Game Clear!",
+  "no_item": "No items",
+  "item_window_title": "Items",
+  "damage": "Damage of {damage} was inflicted on the enemy!"
+}

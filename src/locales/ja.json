@@ -1,0 +1,9 @@
+{
+  "item_get": "{name}を拾った！",
+  "game_clear": "ゲームクリア！",
+  "no_item": "アイテムなし",
+  "item_window_title": "所持アイテム",
+  "damage": "敵に{damage}のダメージを与えた！",
+  "enemy_defeated": "{enemy}を倒した！",
+  "damage_received": "{damage}のダメージを受けた！"
+}

@@ -1,17 +1,16 @@
 import { Direction } from "./types";
-import { Item } from "./item";
+import { MapItem } from "./item";
+import { Command } from "../game/command";
+import { log } from "../utils/logger";
+import { Actor, Status } from "./actor";
 
-export class Player {
-  x: number;
-  y: number;
-  hp: number;
-  items: Item[] = [];
+export class Player extends Actor {
+  items: MapItem[] = [];
   direction: Direction = "down";
+  level: number = 1;
 
-  constructor(x: number, y: number, hp: number = 10) {
-    this.x = x;
-    this.y = y;
-    this.hp = hp;
+  constructor(emitter: Phaser.Events.EventEmitter, x: number, y: number, status: Status) {
+    super(emitter, x, y, status);
   }
 
   move(dx: number, dy: number, dir: Direction) {
@@ -20,8 +19,21 @@ export class Player {
     this.direction = dir;
   }
 
-  addItem(item: Item) {
+  addItem(item: MapItem) {
     this.items.push(item);
+  }
+
+  itemCmdList(): Command[] {
+    return this.items.map((item, index) => (
+      {
+        id: `item-${index}`,
+        label: item.type,
+        action: () => {
+          log(`使用アイテム: ${item.type}`);
+          // item.typeをファイル名としてitemフォルダから探して実行
+        }
+      }
+    ));
   }
 
   // 必要に応じて他のメソッドも追加

@@ -1,6 +1,6 @@
 import { ENEMY_COLOR, TILE_SIZE } from "../constants";
 
-export class Enemy {
+export class MapEnemy {
   x: number;
   y: number;
   hp: number;
