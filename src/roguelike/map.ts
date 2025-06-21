@@ -1,23 +1,39 @@
 import * as ROT from 'rot-js'
 import { Room } from './room'
 import { getItemInfo, MapItem } from './item'
-import { Trap } from './Trap'
+import { MapTrap } from './Trap'
 import { MapEnemy } from './enemy'
-import { ITEM_COLOR, TILE_SIZE } from '../constants'
+import { EMIT_SHOW_MESSAGE, TILE_SIZE } from '../constants'
+import { Player } from './player'
+
+// 隣接8方向を順にチェック
+const directions = [
+  { dx: 0, dy: -1 }, // 上
+  { dx: 1, dy: -1 }, // 右上
+  { dx: 1, dy: 0 },  // 右
+  { dx: 1, dy: 1 },  // 右下
+  { dx: 0, dy: 1 },  // 下
+  { dx: -1, dy: 1 }, // 左下
+  { dx: -1, dy: 0 }, // 左
+  { dx: -1, dy: -1 } // 左上
+];
 
 export class MapData {
   scene: Phaser.Scene;
   map: number[][];
   rooms: Room[] = [];
   items: MapItem[] = [];
-  traps: Trap[] = [];
+  traps: MapTrap[] = [];
   enemies: MapEnemy[] = [];
   stairsPos: { x: number, y: number };
   offsetY: number;
+  player!: Player; // プレイヤー情報を保持
+  emitter: Phaser.Events.EventEmitter;
 
-  constructor(scene: Phaser.Scene, width: number, height: number, offsetY: number = 0) {
+  constructor(scene: Phaser.Scene, width: number, height: number, offsetY: number = 0, emitter: Phaser.Events.EventEmitter) {
     this.scene = scene;
     this.offsetY = offsetY;
+    this.emitter = emitter;
 
     this.map = Array.from({ length: height }, () =>
       Array(width).fill(1)
@@ -40,6 +56,10 @@ export class MapData {
     const lastRoom = this.rooms[this.rooms.length - 1];
     this.stairsPos = lastRoom.getCenter();
 
+  }
+
+  setPlayer(player: Player) {
+    this.player = player;
   }
 
   drawMap(offsetY: number) {
@@ -102,13 +122,33 @@ export class MapData {
 
         // アイテム、罠、階段、敵の存在チェック
         const result = this.existObstacle(x, y, { enemyChk: false });
-        if (result) {
-          this.traps.push({ x, y, type: "spike", visible: false });
+        if (result!) {
+          this.traps.push(new MapTrap(x, y, false));
           break;
+        } else {
+          for (const dir of directions) {
+            const nx = x + dir.dx;
+            const ny = y + dir.dy;
+            if (this.canPlaceTrap(nx, ny)) {
+              this.traps.push(new MapTrap(nx, ny, false));
+              return true;
+            }
+          }
         }
       }
     }
   }
+
+  // 置けるか判定する関数
+  private canPlaceTrap(nx: number, ny: number): boolean {
+    // 0: 通路や床、1: 壁 などの想定
+    if (this.map[ny]?.[nx] !== 0) return false;
+    if (this.traps.some(t => t.x === nx && t.y === ny)) return false;
+    if (this.items.some(item => item.x === nx && item.y === ny)) return false;
+    if (this.stairsPos && this.stairsPos.x === nx && this.stairsPos.y === ny) return false;
+    return true;
+  }
+
 
   /**
    * 障害物の有無判定
@@ -230,7 +270,7 @@ export class MapData {
     this.traps.forEach(trap => {
       // if (trap.visible) {
       if (true) {
-        this.scene.add.rectangle(
+        trap.obj = this.scene.add.rectangle(
           trap.x * TILE_SIZE + 8,
           trap.y * TILE_SIZE + 8 + this.offsetY,
           12,
@@ -250,6 +290,16 @@ export class MapData {
       12,
       0x8888ff // 階段の色（お好みで）
     );
+  }
+
+  activateTrap(x: number, y: number) {
+    const trap = this.traps.find(t => t.x === x && t.y === y);
+    if (trap) {
+      trap.activation(this.player); // トラップのアクティベーション処理
+      this.emitter.emit(EMIT_SHOW_MESSAGE, '罠にかかった！5ダメージを受けた！'); // メッセージを表示
+      trap.obj.destroy(); // トラップを削除
+      this.traps.splice(this.traps.indexOf(trap), 1); // 配列から削除
+    }
   }
 
 }

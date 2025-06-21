@@ -5,3 +5,4 @@ export const ITEM_COLOR = 0x99ff66;
 export const MESSAGE_FONT_SIZE = "14px";
 
 export const EMIT_PLAYER_UPDATE = "playerUpdate";
+export const EMIT_SHOW_MESSAGE = "showMessage";

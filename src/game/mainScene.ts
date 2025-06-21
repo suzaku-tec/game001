@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { getItemInfo, MapItem } from '../roguelike/item';
+import { getItemInfo } from '../roguelike/item';
 import { Player } from '../roguelike/player';
 import { Direction } from "../roguelike/types";
-import { EMIT_PLAYER_UPDATE, ITEM_COLOR, MESSAGE_FONT_SIZE, PLAYER_COLOR, TILE_SIZE } from "../constants";
+import { EMIT_PLAYER_UPDATE, EMIT_SHOW_MESSAGE, MESSAGE_FONT_SIZE, PLAYER_COLOR, TILE_SIZE } from "../constants";
 import { str, setLang } from "../i18n"
 import { log, logMethod } from "../utils/logger";
 import { Command } from "./command";
@@ -15,7 +15,6 @@ export default class MainScene extends Phaser.Scene {
   private infoText?: Phaser.GameObjects.Text;
   private messageBox?: Phaser.GameObjects.Rectangle;
   private messageText?: Phaser.GameObjects.Text;
-  private stairsPos?: { x: number; y: number };
   private commandWindowBox?: Phaser.GameObjects.Rectangle;
   private commandWindowText?: Phaser.GameObjects.Text;
   private isCommandWindowOpen = false;
@@ -56,7 +55,11 @@ export default class MainScene extends Phaser.Scene {
       this.updatePlayerInfo();
     });
 
-    this.mapData = new MapData(this, 50, 40, this.INFO_TEXT_HEIGHT);
+    this.emitter.on(EMIT_SHOW_MESSAGE, (message: string) => {
+      this.showMessage(message);
+    });
+
+    this.mapData = new MapData(this, 50, 40, this.INFO_TEXT_HEIGHT, this.emitter);
   }
 
   create() {
@@ -75,6 +78,7 @@ export default class MainScene extends Phaser.Scene {
       charStatus = getCharacter("test")!;
     }
     this.player = new Player(this.emitter, startPos.x, startPos.y, charStatus);
+    this.mapData.setPlayer(this.player);
 
     this.infoText = this.add.text(
       10, // X座標（左端から10pxなど）
@@ -119,14 +123,14 @@ export default class MainScene extends Phaser.Scene {
 
   // プレイヤー開始位置を決定
   private findStartPos() {
-    for (let y = 0; y < this.mapData.map.length; y++) {
-      for (let x = 0; x < this.mapData.map[0].length; x++) {
-        if (this.mapData.map[y][x] === 0) {
-          return { x, y };
-        }
-      }
-    }
-    return { x: 1, y: 1 };
+    // ランダムな部屋を選ぶ
+    const room = Phaser.Utils.Array.GetRandom(this.mapData.rooms);
+
+    // 部屋内のランダムな座標を決定
+    const x = Phaser.Math.Between(room.x + 1, room.x + room.w - 2);
+    const y = Phaser.Math.Between(room.y + 1, room.y + room.h - 2);
+
+    return { x: x, y: y };
   }
 
   handleMove(event: KeyboardEvent) {
@@ -170,11 +174,13 @@ export default class MainScene extends Phaser.Scene {
       // プレイヤー移動後に呼ぶ
       // this.checkTrap();
       if (this.mapData.existsTrap(newX, newY)) {
-        // トラップ発火
+        log("trap activated at " + newX + "," + newY);
+        this.mapData.activateTrap(newX, newY,);
+        this.mapData.drawTraps(); // トラップを再描画
       }
 
       // 移動後に階段判定
-      if (this.stairsPos && this.player.x === this.stairsPos.x && this.player.y === this.stairsPos.y) {
+      if (this.mapData.existsStairs(newX, newY)) {
         this.showMessage(str("game_clear"));
         // 必要ならゲームクリア処理を追加
         // 例: this.scene.pause(); など
